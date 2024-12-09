@@ -1,23 +1,27 @@
 'use server';
 
-import { Stuff, Condition, Student, Company } from '@prisma/client';
+import { Company, Role } from '@prisma/client';
 import { hash } from 'bcrypt';
 import { redirect } from 'next/navigation';
 import { prisma } from './prisma';
 
 export async function addStudent(student: {
   name: string;
+  aboutMe: string;
   skills: string;
   location: string;
   professionalPage: string;
+  profileImage: string;
   owner: string;
 }) {
   await prisma.student.create({
     data: {
       name: student.name,
+      aboutMe: student.aboutMe,
       skills: student.skills.split(','),
       location: student.location,
       professionalPage: student.professionalPage,
+      profileImage: student.profileImage,
       owner: student.owner,
     },
   });
@@ -25,20 +29,30 @@ export async function addStudent(student: {
   redirect('/student');
 }
 
-export async function editStudent(student: Student) {
-  // console.log(`editStuff data: ${JSON.stringify(stuff, null, 2)}`);
+export async function editStudent(student: {
+  id: number;
+  name: string;
+  aboutMe: string;
+  skills: string;
+  location: string;
+  professionalPage: string;
+  profileImage: string;
+  owner: string;
+}) {
   await prisma.student.update({
     where: { id: student.id },
     data: {
       name: student.name,
-      skills: student.skills,
+      aboutMe: student.aboutMe,
+      skills: student.skills.split(','),
       location: student.location,
       professionalPage: student.professionalPage,
+      profileImage: student.profileImage,
       owner: student.owner,
     },
   });
   // After updating, redirect to the list page
-  redirect('/list');
+  redirect('/student');
 }
 
 export async function addCompany(company: {
@@ -47,7 +61,16 @@ export async function addCompany(company: {
   location: string;
   links: string;
   emails: string;
+  profileImage: string;
   owner: string;
+  positions: {
+    title: string;
+    description: string;
+    skills: string[];
+    jobType: string[];
+    numberOfHires: number;
+    salaryRange: number;
+  }[];
 }) {
   await prisma.company.create({
     data: {
@@ -56,15 +79,24 @@ export async function addCompany(company: {
       location: company.location,
       links: company.links.split(','),
       emails: company.emails.split(','),
+      profileImage: company.profileImage,
       owner: company.owner,
+      positions: {
+        create: company.positions.map((position) => ({
+          title: position.title,
+          description: position.description,
+          skills: position.skills,
+          jobType: position.jobType,
+          numberOfHires: position.numberOfHires,
+          salaryRange: position.salaryRange,
+        })),
+      },
     },
   });
-  // After adding, redirect to the list page
   redirect('/company');
 }
 
 export async function editCompany(company: Company) {
-  // console.log(`editStuff data: ${JSON.stringify(stuff, null, 2)}`);
   await prisma.company.update({
     where: { id: company.id },
     data: {
@@ -73,82 +105,61 @@ export async function editCompany(company: Company) {
       location: company.location,
       links: company.links,
       emails: company.emails,
+      profileImage: company.profileImage,
       owner: company.owner,
     },
   });
-  // After updating, redirect to the list page
   redirect('/company');
 }
 
-/**
- * Adds a new stuff to the database.
- * @param stuff, an object with the following properties: name, quantity, owner, condition.
- */
-export async function addStuff(stuff: { name: string; quantity: number; owner: string; condition: string }) {
-  // console.log(`addStuff data: ${JSON.stringify(stuff, null, 2)}`);
-  let condition: Condition = 'good';
-  if (stuff.condition === 'poor') {
-    condition = 'poor';
-  } else if (stuff.condition === 'excellent') {
-    condition = 'excellent';
-  } else {
-    condition = 'fair';
-  }
-  await prisma.stuff.create({
+/*
+export async function addPosition(position: {
+  title: string;
+  description: string;
+  skills: string;
+  jobType: string[]; // FIXME: Change to JobType[]
+  numberOfHires: number;
+  salaryRange: string;
+}) {
+  // let jobType: JobType[] = [];
+
+  await prisma.position.create({
     data: {
-      name: stuff.name,
-      quantity: stuff.quantity,
-      owner: stuff.owner,
-      condition,
+      title: position.title,
+      description: position.description,
+      skills: position.skills.split(','),
+      jobType: position.jobType, // FIXME: Change to JobType[]
+      numberOfHires: position.numberOfHires,
+      salaryRange: position.salaryRange,
     },
   });
   // After adding, redirect to the list page
-  redirect('/list');
-}
-
-/**
- * Edits an existing stuff in the database.
- * @param stuff, an object with the following properties: id, name, quantity, owner, condition.
- */
-export async function editStuff(stuff: Stuff) {
-  // console.log(`editStuff data: ${JSON.stringify(stuff, null, 2)}`);
-  await prisma.stuff.update({
-    where: { id: stuff.id },
-    data: {
-      name: stuff.name,
-      quantity: stuff.quantity,
-      owner: stuff.owner,
-      condition: stuff.condition,
-    },
-  });
-  // After updating, redirect to the list page
-  redirect('/list');
-}
-
-/**
- * Deletes an existing stuff from the database.
- * @param id, the id of the stuff to delete.
- */
-export async function deleteStuff(id: number) {
-  // console.log(`deleteStuff id: ${id}`);
-  await prisma.stuff.delete({
-    where: { id },
-  });
-  // After deleting, redirect to the list page
-  redirect('/list');
-}
+  redirect('/company');
+} */
 
 /**
  * Creates a new user in the database.
- * @param credentials, an object with the following properties: email, password.
+ * @param credentials, an object with the following properties: email, password, role.
  */
-export async function createUser(credentials: { email: string; password: string }) {
-  // console.log(`createUser data: ${JSON.stringify(credentials, null, 2)}`);
+export async function createUser(credentials: { email: string; password: string; role: string }) {
   const password = await hash(credentials.password, 10);
+
+  let role: Role = Role.STUDENT;
+  if (credentials.role === 'student') {
+    role = Role.STUDENT;
+  } else if (credentials.role === 'company') {
+    role = Role.COMPANY;
+  } else if (credentials.role === 'admin') {
+    role = Role.ADMIN;
+  } else {
+    role = Role.USER;
+  }
+
   await prisma.user.create({
     data: {
       email: credentials.email,
       password,
+      role,
     },
   });
 }
@@ -158,7 +169,6 @@ export async function createUser(credentials: { email: string; password: string 
  * @param credentials, an object with the following properties: email, password.
  */
 export async function changePassword(credentials: { email: string; password: string }) {
-  // console.log(`changePassword data: ${JSON.stringify(credentials, null, 2)}`);
   const password = await hash(credentials.password, 10);
   await prisma.user.update({
     where: { email: credentials.email },
@@ -168,28 +178,20 @@ export async function changePassword(credentials: { email: string; password: str
   });
 }
 
-// Ensure this file exports the searchStuff function
+/**
+ * Counts the number of users in the database
+ * @returns The total number of users
+ */
+export async function getUserCount(): Promise<number> {
+  const count = await prisma.user.count();
+  return count;
+}
 
-export const searchStuff = async (query: string) => {
-  const companies = await prisma.company.findMany({
-    where: {
-      OR: [
-        { name: { contains: query, mode: 'insensitive' } },
-        { overview: { contains: query, mode: 'insensitive' } },
-        { location: { contains: query, mode: 'insensitive' } },
-      ],
-    },
-  });
-
-  const students = await prisma.student.findMany({
-    where: {
-      OR: [
-        { name: { contains: query, mode: 'insensitive' } },
-        { skills: { hasSome: [query] } },
-        { professionalPage: { contains: query, mode: 'insensitive' } },
-      ],
-    },
-  });
-
-  return { companies, students };
-};
+/**
+ * Counts the number of positions posted by the company or admin
+ * @returns the total number of job positions
+ */
+export async function getJobPostingCount(): Promise<number> {
+  const count = await prisma.position.count();
+  return count;
+}

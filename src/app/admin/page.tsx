@@ -1,8 +1,9 @@
 import { getServerSession } from 'next-auth';
-import { Col, Container, Row, Table, Button, Card } from 'react-bootstrap';
+import { Col, Row, Table, Button } from 'react-bootstrap';
 import { prisma } from '@/lib/prisma';
 import { adminProtectedPage } from '@/lib/page-protection';
 import authOptions from '@/lib/authOptions';
+import { getUserCount, getJobPostingCount } from '@/lib/dbActions';
 
 const AdminPage = async () => {
   const session = await getServerSession(authOptions);
@@ -13,13 +14,9 @@ const AdminPage = async () => {
   );
 
   const users = await prisma.user.findMany({});
-
+  const activeUsers = await getUserCount();
+  const jobs = await getJobPostingCount();
   // filler data
-  const analyticsData = {
-    activeUsers: 2000,
-    jobPostings: 150,
-    siteEngagement: 85, // Percentage of engagement
-  };
 
   const recentActivities = [
     { type: 'job', text: 'New job posted: Senior Developer', timestamp: '2 minutes ago' },
@@ -30,7 +27,11 @@ const AdminPage = async () => {
   ];
 
   const jobListings = [
-    { id: '1', title: 'Software Engineer', companyName: 'Tech Corp', location: 'San Francisco', userEmail: 'admin@tech.com' },
+    { id: '1',
+      title: 'Software Engineer',
+      companyName: 'Tech Corp',
+      location: 'San Francisco',
+      userEmail: 'admin@tech.com' },
     { id: '2', title: 'Product Manager', companyName: 'Biz Inc.', location: 'New York', userEmail: 'manager@biz.com' },
   ];
 
@@ -57,22 +58,13 @@ const AdminPage = async () => {
               {/* Active Users Card */}
               <div className="text-center bg-light p-3 rounded" style={{ flex: 1 }}>
                 <h5>Active Users</h5>
-                <p>{analyticsData.activeUsers}</p>
+                <p>{activeUsers}</p>
               </div>
 
               {/* Job Postings Card */}
               <div className="text-center bg-light p-3 rounded" style={{ flex: 1 }}>
                 <h5>Job Postings</h5>
-                <p>{analyticsData.jobPostings}</p>
-              </div>
-
-              {/* Site Engagement Card */}
-              <div className="text-center bg-light p-3 rounded" style={{ flex: 1 }}>
-                <h5>Site Engagement</h5>
-                <p>
-                  {analyticsData.siteEngagement}
-                  %
-                </p>
+                <p>{jobs}</p>
               </div>
             </div>
           </div>
@@ -87,8 +79,8 @@ const AdminPage = async () => {
           </div>
           <div className="p-3">
             <div>
-              {recentActivities.map((activity, index) => (
-                <div key={index} className="d-flex align-items-center mb-3">
+              {recentActivities.map((activity) => (
+                <div key={activity.text} className="d-flex align-items-center mb-3">
                   <div>
                     <p>{activity.text}</p>
                     <span className="text-muted">{activity.timestamp}</span>
@@ -370,7 +362,8 @@ const AdminPage = async () => {
             <section className="p-3">
               {/* Notification Content Input Field */}
               <div className="mb-3">
-                <label htmlFor="notificationMessage" className="form-label">Notification Message</label>
+                {/* <label htmlFor="notificationMessage" className="form-label">Notification Message</label> */}
+                <p>Notification Message</p>
                 <textarea
                   id="notificationMessage"
                   className="form-control"

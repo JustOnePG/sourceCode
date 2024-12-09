@@ -1,11 +1,9 @@
-/* eslint-disable react/jsx-indent, @typescript-eslint/indent */
-
 'use client';
 
 import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { Container, Nav, Navbar, NavDropdown, Image } from 'react-bootstrap';
-import { BoxArrowRight, Lock, PersonFill, PersonPlusFill, Globe } from 'react-bootstrap-icons';
+import { BoxArrowRight, House, Lock, PersonFill, PersonPlusFill, Search, Building } from 'react-bootstrap-icons';
 
 const NavBar: React.FC = () => {
   const { data: session } = useSession();
@@ -13,30 +11,49 @@ const NavBar: React.FC = () => {
   const userWithRole = session?.user as { email: string; randomKey: string };
   const role = userWithRole?.randomKey;
   const pathName = usePathname();
+
   return (
     <Navbar bg="dark" expand="lg">
       <Container>
-      <Navbar.Brand href="/">
-          <Image src="../corponector.png" alt="Corponector Logo" width="100" />
-      </Navbar.Brand>
+        {currentUser ? (
+          <Navbar.Brand href="/search">
+            <Image src="../corponector.png" alt="Corponector Logo" width="100" />
+          </Navbar.Brand>
+        ) : (
+          <Navbar.Brand href="/">
+            <Image src="../corponector.png" alt="Corponector Logo" width="100" />
+          </Navbar.Brand>
+        )}
+
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="me-auto justify-content-start">
-            {currentUser
-              ? [
-                  <Nav.Link id="search-nav" href="/search" key="search" active={pathName === '/search'}>
-                    <Globe />
-                     Browse
-                  </Nav.Link>,
-
-                ]
-              : ''}
-            {currentUser && role === 'ADMIN' ? (
-              <Nav.Link id="admin-stuff-nav" href="/admin" key="admin" active={pathName === '/admin'}>
+          <Nav className="me-auto justify-content-center">
+            <Nav.Link id="home-nav" href="/" key="home" active={pathName === '/'}>
+              <House className="px-1" size={25} />
+              Home
+            </Nav.Link>
+            {(currentUser || role === 'ADMIN' || role === 'USER') && (
+              <Nav.Link id="search-nav" href="/search" key="search" active={pathName === '/search'}>
+                <Search className="px-1" size={25} />
+                Search
+              </Nav.Link>
+            )}
+            {currentUser && role === 'STUDENT' && (
+              <Nav.Link id="student-nav" href="/student" active={pathName === '/student'}>
+                <PersonFill className="px-1" size={25} />
+                Student
+              </Nav.Link>
+            )}
+            {currentUser && role === 'COMPANY' && (
+              <Nav.Link id="company-nav" href="/company" active={pathName === '/company'}>
+                <Building className="px-1" size={25} />
+                Company
+              </Nav.Link>
+            )}
+            {currentUser && role === 'ADMIN' && (
+              <Nav.Link id="admin-nav" href="/admin" key="admin" active={pathName === '/admin'}>
                 Admin
               </Nav.Link>
-            ) : (
-              ''
             )}
           </Nav>
           <Nav>

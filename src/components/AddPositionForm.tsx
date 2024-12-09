@@ -3,39 +3,40 @@
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Button, Form, Container, Row, Col } from 'react-bootstrap';
-import { useSession } from 'next-auth/react';
-import { addStudent } from '@/lib/dbActions';
-import LoadingSpinner from '@/components/LoadingSpinner';
-import { redirect } from 'next/navigation';
+// import { addCompany } from '@/lib/dbActions';
+import { AddCompanySchema } from '@/lib/validationSchemas';
 import swal from 'sweetalert';
-import { AddStudentSchema } from '@/lib/validationSchemas';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import { useSession } from 'next-auth/react';
+import { redirect } from 'next/navigation';
 
 const onSubmit = async (data: {
   name: string;
+  overview: string;
   location: string;
-  aboutMe: string;
-  skills: string;
-  professionalPage: string;
-  profileImage: string;
+  // positions: string;
+  links: string;
+  emails: string;
   owner: string;
 }) => {
-  console.log(data);
   // Handle form submission here
-  await addStudent(data);
+  console.log(data);
+  // await addCompany(data);
   swal('Success', 'Your item has been added', 'success', {
     timer: 2000,
   });
 };
 
-const AddStudentForm: React.FC = () => {
+const AddPositionForm: React.FC = () => {
   const { data: session, status } = useSession();
+  // console.log('AddStuffForm', status, session);
   const currentUser = session?.user?.email || '';
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm({
-    resolver: yupResolver(AddStudentSchema),
+    resolver: yupResolver(AddCompanySchema),
   });
 
   if (status === 'loading') {
@@ -47,18 +48,20 @@ const AddStudentForm: React.FC = () => {
 
   return (
     <Container className="mt-3">
-      <h1>Student Additional Information</h1>
+      <h1>Company Additional Information</h1>
       <Form onSubmit={handleSubmit(onSubmit)}>
-        {/* Name & Location Input */}
+
         <Row>
+          {/* Company Name Input */}
           <Col>
             <Form.Group className="mb-3">
-              <Form.Label>Name</Form.Label>
+              <Form.Label>Company Name</Form.Label>
               <Form.Control type="text" {...register('name')} isInvalid={!!errors.name} />
               <Form.Control.Feedback type="invalid">{errors.name?.message}</Form.Control.Feedback>
             </Form.Group>
           </Col>
 
+          {/* Location Input */}
           <Col>
             <Form.Group className="mb-3">
               <Form.Label>Location</Form.Label>
@@ -68,37 +71,37 @@ const AddStudentForm: React.FC = () => {
           </Col>
         </Row>
 
-        {/* About Me Input */}
+        {/* Overview Input */}
         <Form.Group className="mb-3">
-          <Form.Label>About Me</Form.Label>
-          <Form.Control type="text" {...register('aboutMe')} isInvalid={!!errors.aboutMe} />
-          <Form.Control.Feedback type="invalid">{errors.aboutMe?.message}</Form.Control.Feedback>
+          <Form.Label>Overview</Form.Label>
+          <Form.Control as="textarea" rows={3} {...register('overview')} isInvalid={!!errors.overview} />
+          <Form.Control.Feedback type="invalid">{errors.overview?.message}</Form.Control.Feedback>
         </Form.Group>
 
-        {/* Skills Input */}
+        {/* Positions Input */}
         <Form.Group className="mb-3">
-          <Form.Label>Skills</Form.Label>
-          <Form.Control type="text" {...register('skills')} isInvalid={!!errors.skills} />
-          <Form.Control.Feedback type="invalid">{errors.skills?.message}</Form.Control.Feedback>
+          <Form.Label>Job Positions</Form.Label>
+          <Form.Control type="text" {...register('positions')} isInvalid={!!errors.positions} />
+          <Form.Control.Feedback type="invalid">{errors.positions?.message}</Form.Control.Feedback>
         </Form.Group>
 
-        {/* Professional Page URL Input */}
+        {/* Links Input */}
         <Form.Group className="mb-3">
-          <Form.Label>Professional Page</Form.Label>
-          <Form.Control type="url" {...register('professionalPage')} isInvalid={!!errors.professionalPage} />
-          <Form.Control.Feedback type="invalid">{errors.professionalPage?.message}</Form.Control.Feedback>
+          <Form.Label>Links (Website or Social Media)</Form.Label>
+          <Form.Control type="url" {...register('links')} isInvalid={!!errors.links} />
+          <Form.Control.Feedback type="invalid">{errors.links?.message}</Form.Control.Feedback>
         </Form.Group>
 
-        {/* Profile Image URL Input */}
+        {/* Contact Email Input */}
         <Form.Group className="mb-3">
-          <Form.Label>Profile Image URL</Form.Label>
-          <Form.Control type="url" {...register('profileImage')} isInvalid={!!errors.profileImage} />
-          <Form.Control.Feedback type="invalid">{errors.profileImage?.message}</Form.Control.Feedback>
+          <Form.Label>Contact Email</Form.Label>
+          <Form.Control type="email" {...register('emails')} isInvalid={!!errors.emails} />
+          <Form.Control.Feedback type="invalid">{errors.emails?.message}</Form.Control.Feedback>
         </Form.Group>
 
         <input type="hidden" {...register('owner')} value={currentUser} />
 
-        {/* Submit Button */}
+        {/* Brings Company to Company Page */}
         <Button type="submit" variant="primary">
           Submit
         </Button>
@@ -107,4 +110,4 @@ const AddStudentForm: React.FC = () => {
   );
 };
 
-export default AddStudentForm;
+export default AddPositionForm;

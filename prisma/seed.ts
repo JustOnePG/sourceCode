@@ -1,4 +1,4 @@
-import { PrismaClient, Role, Condition } from '@prisma/client';
+import { PrismaClient, Role } from '@prisma/client';
 import { hash } from 'bcrypt';
 import * as config from '../config/settings.development.json';
 
@@ -24,27 +24,6 @@ async function main() {
     });
     // console.log(`  Created user: ${user.email} with role: ${user.role}`);
   });
-  config.defaultData.forEach(async (data, index) => {
-    let condition: Condition = 'good';
-    if (data.condition === 'poor') {
-      condition = 'poor';
-    } else if (data.condition === 'excellent') {
-      condition = 'excellent';
-    } else {
-      condition = 'fair';
-    }
-    console.log(`  Adding stuff: ${data.name} (${data.owner})`);
-    await prisma.stuff.upsert({
-      where: { id: index + 1 },
-      update: {},
-      create: {
-        name: data.name,
-        quantity: data.quantity,
-        owner: data.owner,
-        condition,
-      },
-    });
-  });
 
   config.students.forEach(async (data, index) => {
     console.log('Adding student: ', data);
@@ -54,10 +33,12 @@ async function main() {
       update: {},
       create: {
         name: data.name,
+        aboutMe: data.aboutMe,
         skills: data.skills,
         location: data.location,
         professionalPage: data.professionalPage,
-        owner: data.owner,
+        profileImage: data.profileImage,
+        owner: Array.isArray(data.owner) ? data.owner.join(', ') : data.owner,
       },
     });
   });
@@ -72,13 +53,25 @@ async function main() {
         name: data.name,
         overview: data.overview,
         location: data.location,
+        profileImage: data.profileImage,
+        positions: {
+          create: data.positions.map((position) => ({
+            title: position.title,
+            description: position.description,
+            skills: position.skills,
+            jobType: position.jobType,
+            numberOfHires: position.numberOfHires,
+            salaryRange: position.salaryRange,
+          })),
+        },
         links: data.links,
         emails: data.emails,
-        owner: data.owner,
+        owner: Array.isArray(data.owner) ? data.owner.join(', ') : data.owner,
       },
     });
   });
 }
+
 main()
   .then(() => prisma.$disconnect())
   .catch(async (e) => {
